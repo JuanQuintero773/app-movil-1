@@ -11,6 +11,12 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+// Habilitar persistencia offline para móviles
+firebase.firestore().enablePersistence()
+    .catch((err) => {
+        console.log("Persistencia offline no disponible");
+    });
+
 // Referencia a la colección de resultados
 const resultadosRef = db.collection('resultados_stop');
 
@@ -46,7 +52,8 @@ function guardarResultado() {
         animal: animalInput.value,
         objeto: objectInput.value,
         comida: foodInput.value,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        dispositivoOrigen: navigator.userAgent // Identificar dispositivo
     };
 
     // Guardar en Firestore
@@ -59,6 +66,11 @@ function guardarResultado() {
             
             // Cargar resultados
             cargarResultados();
+
+            // Vibración para dispositivos móviles
+            if ('vibrate' in navigator) {
+                navigator.vibrate(200); // Vibra 200 milisegundos
+            }
         })
         .catch((error) => {
             console.error("Error guardando resultado: ", error);
@@ -106,3 +118,16 @@ function cargarResultados() {
 
 // Cargar resultados al inicio
 document.addEventListener('DOMContentLoaded', cargarResultados);
+
+// Detección de dispositivo móvil
+function esMovil() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+// Añadir soporte para touch en dispositivos móviles
+if (esMovil()) {
+    stopButton.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Prevenir comportamientos por defecto
+        guardarResultado();
+    });
+}
