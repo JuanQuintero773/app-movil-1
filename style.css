@@ -41,13 +41,15 @@ h1 {
 }
 
 input {
-    padding: 12px;
+    padding: 8px;
     background-color: #3a3a3a;
     border: 2px solid #ff3333;
     border-radius: 8px;
     color: white;
-    font-size: 16px;
+    font-size: 14px;
     transition: all 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 input:focus {
