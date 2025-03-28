@@ -1,8 +1,10 @@
-// Configuración de Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyDGJ1qDEwrKRJSYFOKwAsoBeUYH3vuueIE",
     authDomain: "app-movil-1-35eaa.firebaseapp.com",
     projectId: "app-movil-1-35eaa",
+    storageBucket: "app-movil-1-35eaa.firebasestorage.app",
+    messagingSenderId: "442408961833",
+    appId: "1:442408961833:web:7130faae5fdf4ff086d938"
 };
 
 // Inicializar Firebase
@@ -23,7 +25,10 @@ const stopButton = document.getElementById('stopButton');
 const resultsBody = document.getElementById('resultsBody');
 
 // Evento para guardar resultados
-stopButton.addEventListener('click', () => {
+stopButton.addEventListener('click', guardarResultado);
+
+// Función para guardar resultado
+function guardarResultado() {
     const letra = letterInput.value.toUpperCase();
 
     // Validar que todos los campos estén llenos y la letra sea válida
@@ -40,49 +45,64 @@ stopButton.addEventListener('click', () => {
         ciudad: cityInput.value,
         animal: animalInput.value,
         objeto: objectInput.value,
-        comida: foodInput.value
+        comida: foodInput.value,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     // Guardar en Firestore
     resultadosRef.add(resultado)
-        .then(() => {
+        .then((docRef) => {
+            console.log("Documento guardado con ID: ", docRef.id);
+            
             // Limpiar inputs
-            letterInput.value = '';
-            nameInput.value = '';
-            cityInput.value = '';
-            animalInput.value = '';
-            objectInput.value = '';
-            foodInput.value = '';
-
+            limpiarInputs();
+            
             // Cargar resultados
             cargarResultados();
         })
         .catch((error) => {
             console.error("Error guardando resultado: ", error);
+            alert('Hubo un error al guardar los datos');
         });
-});
+}
+
+// Función para limpiar inputs
+function limpiarInputs() {
+    letterInput.value = '';
+    nameInput.value = '';
+    cityInput.value = '';
+    animalInput.value = '';
+    objectInput.value = '';
+    foodInput.value = '';
+}
 
 // Función para cargar resultados desde Firestore
 function cargarResultados() {
     resultsBody.innerHTML = ''; // Limpiar tabla
 
-    resultadosRef.get().then((querySnapshot) => {
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            const row = `
-                <tr>
-                    <td>${data.letra}</td>
-                    <td>${data.nombre}</td>
-                    <td>${data.ciudad}</td>
-                    <td>${data.animal}</td>
-                    <td>${data.objeto}</td>
-                    <td>${data.comida}</td>
-                </tr>
-            `;
-            resultsBody.innerHTML += row;
+    resultadosRef
+        .orderBy('timestamp', 'desc') // Ordenar por timestamp más reciente
+        .get()
+        .then((querySnapshot) => {
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                const row = `
+                    <tr>
+                        <td>${data.letra}</td>
+                        <td>${data.nombre}</td>
+                        <td>${data.ciudad}</td>
+                        <td>${data.animal}</td>
+                        <td>${data.objeto}</td>
+                        <td>${data.comida}</td>
+                    </tr>
+                `;
+                resultsBody.innerHTML += row;
+            });
+        })
+        .catch((error) => {
+            console.error("Error cargando resultados: ", error);
         });
-    });
 }
 
 // Cargar resultados al inicio
-cargarResultados();
+document.addEventListener('DOMContentLoaded', cargarResultados);
